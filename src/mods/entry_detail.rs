@@ -10,8 +10,6 @@ use std::error::Error;
 use std::io::Stdout;
 use std::time::{Duration, Instant};
 
-const CLIPBOARD_TIMEOUT_SECS: u64 = 30;
-
 pub enum DetailAction {
     Back,
     Edit(String),
@@ -21,6 +19,7 @@ pub enum DetailAction {
 pub fn show(
     term: &mut Terminal<CrosstermBackend<Stdout>>,
     entry: &VaultEntry,
+    clipboard_timeout_secs: u64,
 ) -> Result<DetailAction, Box<dyn Error>> {
     let mut reveal = false;
     let mut status = String::new();
@@ -29,7 +28,7 @@ pub fn show(
     loop {
         // auto-clear clipboard when timeout expires
         if let Some(t) = copy_time {
-            if t.elapsed().as_secs() >= CLIPBOARD_TIMEOUT_SECS {
+            if t.elapsed().as_secs() >= clipboard_timeout_secs {
                 clear_clipboard();
                 copy_time = None;
                 status = "Clipboard cleared.".to_string();
@@ -44,7 +43,7 @@ pub fn show(
 
         // build status with countdown if active
         let status_display = if let Some(t) = copy_time {
-            let remaining = CLIPBOARD_TIMEOUT_SECS.saturating_sub(t.elapsed().as_secs());
+            let remaining = clipboard_timeout_secs.saturating_sub(t.elapsed().as_secs());
             format!("{}  (clears in {}s)", status, remaining)
         } else {
             status.clone()

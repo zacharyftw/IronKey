@@ -29,6 +29,7 @@ uuid = { version = "1", features = ["v4"] }
 chrono = "0.4"
 zeroize = "1"
 base64 = "0.22"
+toml = "0.8"
 
 [features]
 wayland_support = ["wl-clipboard-rs"]

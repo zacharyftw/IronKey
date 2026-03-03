@@ -15,20 +15,23 @@ const LABELS: [&str; 5] = ["Title", "Username", "Password", "URL", "Notes"];
 
 pub fn show_add(
     term: &mut Terminal<CrosstermBackend<Stdout>>,
+    default_length: usize,
 ) -> Result<Option<VaultEntry>, Box<dyn Error>> {
-    show_form(term, None)
+    show_form(term, None, default_length)
 }
 
 pub fn show_edit(
     term: &mut Terminal<CrosstermBackend<Stdout>>,
     entry: &VaultEntry,
+    default_length: usize,
 ) -> Result<Option<VaultEntry>, Box<dyn Error>> {
-    show_form(term, Some(entry))
+    show_form(term, Some(entry), default_length)
 }
 
 fn show_form(
     term: &mut Terminal<CrosstermBackend<Stdout>>,
     existing: Option<&VaultEntry>,
+    default_length: usize,
 ) -> Result<Option<VaultEntry>, Box<dyn Error>> {
     let mut fields: [String; 5] = if let Some(e) = existing {
         [
@@ -154,7 +157,7 @@ fn show_form(
                     }
                 }
                 KeyCode::Char('g') if focused == 2 => {
-                    if let Some(pw) = generator::show(term)? {
+                    if let Some(pw) = generator::show(term, default_length)? {
                         fields[2] = pw;
                         status = "Password generated!".to_string();
                     }

@@ -15,9 +15,10 @@ const OPT_LABELS: [&str; 4] = ["Uppercase", "Lowercase", "Numbers", "Special Cha
 // Returns Some(password) when confirmed, None on cancel.
 pub fn show(
     term: &mut Terminal<CrosstermBackend<Stdout>>,
+    default_length: usize,
 ) -> Result<Option<String>, Box<dyn Error>> {
     let mut selected = [true, true, true, true];
-    let mut length_input = String::from("20");
+    let mut length_input = default_length.to_string();
     let mut focused: usize = 0; // 0-3 char types, 4 length
     let mut generated: Option<String> = None;
     let mut status = String::new();

@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod config;
 pub mod entry_detail;
 pub mod entry_form;
 pub mod generator;
