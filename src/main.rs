@@ -29,11 +29,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         match screen {
             Screen::Auth => {
                 let vault_path = state.config.vault_path();
-                let (password, loaded_vault) = auth(&mut term)?;
-                // auth creates the vault at default path; move it if config specifies a custom one
-                if vault_path != vault::vault_path() {
-                    vault::save(&vault_path, &password, &loaded_vault)?;
-                }
+                let (password, loaded_vault) = auth(&mut term, &vault_path)?;
                 state.master_password = password;
                 state.vault = loaded_vault;
                 state.screen = Screen::VaultList;
@@ -41,17 +37,24 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
             Screen::VaultList => {
                 term.clear()?;
                 let default_length = state.config.default_password_length;
-                match vault_list::show(&mut term, &state.vault, default_length)? {
+                let idle = state.config.lock_on_idle_secs;
+                match vault_list::show(&mut term, &state.vault, default_length, idle)? {
                     VaultListAction::Quit => break,
                     VaultListAction::View(i) => state.screen = Screen::EntryDetail(i),
                     VaultListAction::Add => state.screen = Screen::AddEntry,
+                    VaultListAction::Lock => {
+                        state.vault = Default::default();
+                        state.master_password = String::new();
+                        state.screen = Screen::Auth;
+                    }
                 }
             }
             Screen::EntryDetail(i) => {
                 term.clear()?;
                 let entry = state.vault.entries[i].clone();
                 let timeout = state.config.clipboard_timeout_secs;
-                match entry_detail::show(&mut term, &entry, timeout)? {
+                let idle = state.config.lock_on_idle_secs;
+                match entry_detail::show(&mut term, &entry, timeout, idle)? {
                     DetailAction::Back => state.screen = Screen::VaultList,
                     DetailAction::Edit(id) => state.screen = Screen::EditEntry(id),
                     DetailAction::Delete(id) => {
@@ -62,6 +65,11 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
                             &state.vault,
                         )?;
                         state.screen = Screen::VaultList;
+                    }
+                    DetailAction::Lock => {
+                        state.vault = Default::default();
+                        state.master_password = String::new();
+                        state.screen = Screen::Auth;
                     }
                 }
             }

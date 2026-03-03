@@ -1,7 +1,7 @@
 use super::generator;
-use super::utils::{centered_rect, navigate_list, set_clipboard_content};
+use super::utils::{centered_rect, clear_clipboard, navigate_list, set_clipboard_content};
 use super::vault::Vault;
-use crossterm::event::{read, Event, KeyCode};
+use crossterm::event::{poll, read, Event, KeyCode};
 use ratatui::backend::CrosstermBackend;
 use ratatui::prelude::Alignment;
 use ratatui::style::{Color, Modifier, Style};
@@ -9,29 +9,40 @@ use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
 use ratatui::Terminal;
 use std::error::Error;
 use std::io::Stdout;
+use std::time::{Duration, Instant};
 
 pub enum VaultListAction {
     Quit,
-    View(usize), // index into the original vault.entries, not the filtered list
+    View(usize),
     Add,
+    Lock,
 }
 
 pub fn show(
     term: &mut Terminal<CrosstermBackend<Stdout>>,
     vault: &Vault,
     default_length: usize,
+    idle_timeout_secs: Option<u64>,
 ) -> Result<VaultListAction, Box<dyn Error>> {
     let mut list_state = ListState::default();
     let mut status = String::new();
     let mut search_query = String::new();
     let mut search_mode = false;
+    let mut last_activity = Instant::now();
 
     if !vault.entries.is_empty() {
         list_state.select(Some(0));
     }
 
     loop {
-        // build filtered list: (display_string, original_index)
+        // idle lock check
+        if let Some(timeout) = idle_timeout_secs {
+            if last_activity.elapsed().as_secs() >= timeout {
+                clear_clipboard();
+                return Ok(VaultListAction::Lock);
+            }
+        }
+
         let filtered: Vec<(String, usize)> = vault
             .entries
             .iter()
@@ -48,7 +59,6 @@ pub fn show(
             .map(|(i, e)| (format!("  {}  ·  {}", e.title, e.username), i))
             .collect();
 
-        // keep selection in bounds after filter changes
         if filtered.is_empty() {
             list_state.select(None);
         } else if list_state.selected().map_or(true, |s| s >= filtered.len()) {
@@ -65,7 +75,6 @@ pub fn show(
                 .style(Style::default().fg(Color::Green));
             f.render_widget(block, centered_rect(80, 85, size));
 
-            // search bar
             let search_display = if search_mode {
                 format!(" / {}_", search_query)
             } else if !search_query.is_empty() {
@@ -118,7 +127,7 @@ pub fn show(
             let hint = if search_mode {
                 " Type to filter   Esc exit search "
             } else {
-                " ↑↓ navigate   Enter view   a add   g generate   / search   q quit "
+                " ↑↓ navigate   Enter view   a add   g generate   / search   l lock   q quit "
             };
             let hint_para = Paragraph::new(hint)
                 .style(Style::default().fg(Color::DarkGray))
@@ -126,56 +135,63 @@ pub fn show(
             f.render_widget(hint_para, centered_rect(80, 5, size));
         })?;
 
-        if let Event::Key(event) = read()? {
-            if search_mode {
-                match event.code {
-                    KeyCode::Esc => {
-                        search_mode = false;
-                        search_query.clear();
-                        if !vault.entries.is_empty() {
-                            list_state.select(Some(0));
-                        }
-                    }
-                    KeyCode::Backspace if !search_query.is_empty() => {
-                        search_query.pop();
-                    }
-                    KeyCode::Enter => {
-                        search_mode = false;
-                    }
-                    KeyCode::Char(c) => {
-                        search_query.push(c);
-                        list_state.select(if filtered.is_empty() { None } else { Some(0) });
-                    }
-                    _ => {}
-                }
-            } else {
-                match event.code {
-                    KeyCode::Char('q') => return Ok(VaultListAction::Quit),
-                    KeyCode::Char('a') => return Ok(VaultListAction::Add),
-                    KeyCode::Char('/') => {
-                        search_mode = true;
-                        status.clear();
-                    }
-                    KeyCode::Char('g') => {
-                        if let Some(pw) = generator::show(term, default_length)? {
-                            match set_clipboard_content(&pw) {
-                                Ok(_) => status = "Password generated and copied!".to_string(),
-                                Err(_) => status = "Password generated.".to_string(),
+        if poll(Duration::from_millis(1000))? {
+            if let Event::Key(event) = read()? {
+                last_activity = Instant::now();
+                if search_mode {
+                    match event.code {
+                        KeyCode::Esc => {
+                            search_mode = false;
+                            search_query.clear();
+                            if !vault.entries.is_empty() {
+                                list_state.select(Some(0));
                             }
                         }
-                        term.clear()?;
+                        KeyCode::Backspace if !search_query.is_empty() => {
+                            search_query.pop();
+                        }
+                        KeyCode::Enter => {
+                            search_mode = false;
+                        }
+                        KeyCode::Char(c) => {
+                            search_query.push(c);
+                            list_state.select(if filtered.is_empty() { None } else { Some(0) });
+                        }
+                        _ => {}
                     }
-                    KeyCode::Up | KeyCode::Down => {
-                        navigate_list(&mut list_state, filtered.len(), event.code);
-                    }
-                    KeyCode::Enter => {
-                        if let Some(i) = list_state.selected() {
-                            if let Some((_, original_idx)) = filtered.get(i) {
-                                return Ok(VaultListAction::View(*original_idx));
+                } else {
+                    match event.code {
+                        KeyCode::Char('q') => return Ok(VaultListAction::Quit),
+                        KeyCode::Char('a') => return Ok(VaultListAction::Add),
+                        KeyCode::Char('l') => {
+                            clear_clipboard();
+                            return Ok(VaultListAction::Lock);
+                        }
+                        KeyCode::Char('/') => {
+                            search_mode = true;
+                            status.clear();
+                        }
+                        KeyCode::Char('g') => {
+                            if let Some(pw) = generator::show(term, default_length)? {
+                                match set_clipboard_content(&pw) {
+                                    Ok(_) => status = "Password generated and copied!".to_string(),
+                                    Err(_) => status = "Password generated.".to_string(),
+                                }
+                            }
+                            term.clear()?;
+                        }
+                        KeyCode::Up | KeyCode::Down => {
+                            navigate_list(&mut list_state, filtered.len(), event.code);
+                        }
+                        KeyCode::Enter => {
+                            if let Some(i) = list_state.selected() {
+                                if let Some((_, original_idx)) = filtered.get(i) {
+                                    return Ok(VaultListAction::View(*original_idx));
+                                }
                             }
                         }
+                        _ => {}
                     }
-                    _ => {}
                 }
             }
         }

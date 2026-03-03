@@ -14,18 +14,29 @@ pub enum DetailAction {
     Back,
     Edit(String),
     Delete(String),
+    Lock,
 }
 
 pub fn show(
     term: &mut Terminal<CrosstermBackend<Stdout>>,
     entry: &VaultEntry,
     clipboard_timeout_secs: u64,
+    idle_timeout_secs: Option<u64>,
 ) -> Result<DetailAction, Box<dyn Error>> {
     let mut reveal = false;
     let mut status = String::new();
     let mut copy_time: Option<Instant> = None;
+    let mut last_activity = Instant::now();
 
     loop {
+        // idle lock check
+        if let Some(timeout) = idle_timeout_secs {
+            if last_activity.elapsed().as_secs() >= timeout {
+                clear_clipboard();
+                return Ok(DetailAction::Lock);
+            }
+        }
+
         // auto-clear clipboard when timeout expires
         if let Some(t) = copy_time {
             if t.elapsed().as_secs() >= clipboard_timeout_secs {
@@ -91,10 +102,15 @@ pub fn show(
         // poll with 1s timeout so the countdown updates every second
         if poll(Duration::from_millis(1000))? {
             if let Event::Key(event) = read()? {
+                last_activity = Instant::now();
                 match event.code {
                     KeyCode::Esc => {
                         clear_clipboard();
                         return Ok(DetailAction::Back);
+                    }
+                    KeyCode::Char('l') => {
+                        clear_clipboard();
+                        return Ok(DetailAction::Lock);
                     }
                     KeyCode::Char(' ') => {
                         reveal = !reveal;

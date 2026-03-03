@@ -8,15 +8,16 @@ use ratatui::widgets::{Block, Borders, Paragraph};
 use ratatui::Terminal;
 use std::error::Error;
 use std::io::Stdout;
+use std::path::PathBuf;
 
 pub fn auth(
     term: &mut Terminal<CrosstermBackend<Stdout>>,
+    vault_path: &PathBuf,
 ) -> Result<(String, Vault), Box<dyn Error>> {
-    let path = vault::vault_path();
-    if path.exists() {
-        unlock_vault(term)
+    if vault_path.exists() {
+        unlock_vault(term, vault_path)
     } else {
-        create_vault(term)
+        create_vault(term, vault_path)
     }
 }
 
@@ -83,6 +84,7 @@ fn read_password(
 
 fn create_vault(
     term: &mut Terminal<CrosstermBackend<Stdout>>,
+    vault_path: &PathBuf,
 ) -> Result<(String, Vault), Box<dyn Error>> {
     loop {
         let password = read_password(term, " Set Master Password ", "")?;
@@ -99,20 +101,19 @@ fn create_vault(
             continue;
         }
         let vault = Vault::default();
-        let path = vault::vault_path();
-        vault::save(&path, &password, &vault)?;
+        vault::save(vault_path, &password, &vault)?;
         return Ok((password, vault));
     }
 }
 
 fn unlock_vault(
     term: &mut Terminal<CrosstermBackend<Stdout>>,
+    vault_path: &PathBuf,
 ) -> Result<(String, Vault), Box<dyn Error>> {
     let mut status = String::new();
     loop {
         let password = read_password(term, " Enter Master Password ", &status)?;
-        let path = vault::vault_path();
-        match vault::load(&path, &password) {
+        match vault::load(vault_path, &password) {
             Ok(vault) => return Ok((password, vault)),
             Err(_) => {
                 status = "Wrong password. Try again.".to_string();
