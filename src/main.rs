@@ -5,6 +5,7 @@ use mods::auth::auth;
 use mods::entry_detail::{self, DetailAction};
 use mods::entry_form;
 use mods::state::{AppState, Screen};
+use mods::utils::clear_clipboard;
 use mods::vault::{self, add_entry, delete_entry, update_entry};
 use mods::vault_list::{self, VaultListAction};
 use ratatui::backend::CrosstermBackend;
@@ -73,6 +74,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    clear_clipboard();
     let _ = stdout().execute(LeaveAlternateScreen);
     terminal::disable_raw_mode()?;
     Ok(())

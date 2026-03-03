@@ -79,6 +79,10 @@ pub fn set_clipboard_content(content: &str) -> Result<(), String> {
     Ok(())
 }
 
+pub fn clear_clipboard() {
+    set_clipboard_content("").ok();
+}
+
 pub fn navigate_list(list_state: &mut ListState, total_options: usize, key_code: KeyCode) {
     if let Some(selected) = list_state.selected() {
         match key_code {
