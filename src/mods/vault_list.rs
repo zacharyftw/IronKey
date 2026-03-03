@@ -12,6 +12,7 @@ use std::io::Stdout;
 pub enum VaultListAction {
     Quit,
     View(usize),
+    Add,
 }
 
 pub fn show(
@@ -62,7 +63,7 @@ pub fn show(
                 f.render_stateful_widget(list, centered_rect(74, 70, size), &mut list_state);
             }
 
-            let hint = Paragraph::new(" ↑↓ navigate   Enter view   q quit ")
+            let hint = Paragraph::new(" ↑↓ navigate   Enter view   a add   q quit ")
                 .style(Style::default().fg(Color::DarkGray))
                 .alignment(Alignment::Center);
             f.render_widget(hint, centered_rect(80, 8, size));
@@ -71,6 +72,7 @@ pub fn show(
         if let Event::Key(event) = read()? {
             match event.code {
                 KeyCode::Char('q') => return Ok(VaultListAction::Quit),
+                KeyCode::Char('a') => return Ok(VaultListAction::Add),
                 KeyCode::Up | KeyCode::Down => {
                     navigate_list(&mut list_state, vault.entries.len(), event.code);
                 }

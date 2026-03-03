@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod entry_detail;
+pub mod entry_form;
 pub mod passgen;
 pub mod s1;
 pub mod s2;

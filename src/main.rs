@@ -3,7 +3,9 @@ use crossterm::terminal::{self, enable_raw_mode, EnterAlternateScreen, LeaveAlte
 use crossterm::ExecutableCommand;
 use mods::auth::auth;
 use mods::entry_detail::{self, DetailAction};
+use mods::entry_form;
 use mods::state::{AppState, Screen};
+use mods::vault::{self, add_entry, delete_entry, update_entry};
 use mods::vault_list::{self, VaultListAction};
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
@@ -23,9 +25,9 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let screen = state.screen.clone();
         match screen {
             Screen::Auth => {
-                let (password, vault) = auth(&mut term)?;
+                let (password, loaded_vault) = auth(&mut term)?;
                 state.master_password = password;
-                state.vault = vault;
+                state.vault = loaded_vault;
                 state.screen = Screen::VaultList;
             }
             Screen::VaultList => {
@@ -33,16 +35,39 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
                 match vault_list::show(&mut term, &state.vault)? {
                     VaultListAction::Quit => break,
                     VaultListAction::View(i) => state.screen = Screen::EntryDetail(i),
+                    VaultListAction::Add => state.screen = Screen::AddEntry,
                 }
             }
             Screen::EntryDetail(i) => {
                 term.clear()?;
-                match entry_detail::show(&mut term, &state.vault.entries[i])? {
+                let entry = state.vault.entries[i].clone();
+                match entry_detail::show(&mut term, &entry)? {
                     DetailAction::Back => state.screen = Screen::VaultList,
+                    DetailAction::Edit(id) => state.screen = Screen::EditEntry(id),
+                    DetailAction::Delete(id) => {
+                        delete_entry(&mut state.vault, &id);
+                        vault::save(&vault::vault_path(), &state.master_password, &state.vault)?;
+                        state.screen = Screen::VaultList;
+                    }
                 }
             }
-            Screen::AddEntry | Screen::EditEntry(_) => {
-                // Phase 5
+            Screen::AddEntry => {
+                term.clear()?;
+                if let Some(entry) = entry_form::show_add(&mut term)? {
+                    add_entry(&mut state.vault, entry);
+                    vault::save(&vault::vault_path(), &state.master_password, &state.vault)?;
+                }
+                state.screen = Screen::VaultList;
+            }
+            Screen::EditEntry(id) => {
+                term.clear()?;
+                if let Some(pos) = state.vault.entries.iter().position(|e| e.id == id) {
+                    let existing = state.vault.entries[pos].clone();
+                    if let Some(updated) = entry_form::show_edit(&mut term, &existing)? {
+                        update_entry(&mut state.vault, &id, updated);
+                        vault::save(&vault::vault_path(), &state.master_password, &state.vault)?;
+                    }
+                }
                 state.screen = Screen::VaultList;
             }
         }
