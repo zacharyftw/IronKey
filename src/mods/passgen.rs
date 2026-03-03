@@ -23,6 +23,13 @@ pub fn passgen(selected_options: [bool; 4], pass_len: usize) -> io::Result<Strin
         charset.push_str(symbols);
     }
 
+    if charset.is_empty() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "at least one character type must be selected",
+        ));
+    }
+
     let mut charset_vec = charset.chars().collect::<Vec<char>>();
     let mut rng = rand::thread_rng();
     charset_vec.shuffle(&mut rng);
