@@ -69,6 +69,9 @@ fn read_password(
     loop {
         draw_input(term, title, &input, status)?;
         if let Event::Key(event) = read()? {
+            if event.kind != crossterm::event::KeyEventKind::Press {
+                continue;
+            }
             match event.code {
                 KeyCode::Char(c) => input.push(c),
                 KeyCode::Backspace if !input.is_empty() => {

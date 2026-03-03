@@ -119,6 +119,9 @@ pub fn show(
         })?;
 
         if let Event::Key(event) = read()? {
+            if event.kind != crossterm::event::KeyEventKind::Press {
+                continue;
+            }
             match event.code {
                 KeyCode::Esc => return Ok(None),
                 KeyCode::Enter => {

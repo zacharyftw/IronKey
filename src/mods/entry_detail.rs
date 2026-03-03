@@ -102,6 +102,9 @@ pub fn show(
         // poll with 1s timeout so the countdown updates every second
         if poll(Duration::from_millis(1000))? {
             if let Event::Key(event) = read()? {
+                if event.kind != crossterm::event::KeyEventKind::Press {
+                    continue;
+                }
                 last_activity = Instant::now();
                 match event.code {
                     KeyCode::Esc => {
@@ -170,6 +173,9 @@ fn confirm_delete(
         })?;
 
         if let Event::Key(event) = read()? {
+            if event.kind != crossterm::event::KeyEventKind::Press {
+                continue;
+            }
             match event.code {
                 KeyCode::Char('y') => return Ok(true),
                 KeyCode::Char('n') | KeyCode::Esc => return Ok(false),

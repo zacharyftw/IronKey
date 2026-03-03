@@ -137,6 +137,9 @@ pub fn show(
 
         if poll(Duration::from_millis(1000))? {
             if let Event::Key(event) = read()? {
+                if event.kind != crossterm::event::KeyEventKind::Press {
+                    continue;
+                }
                 last_activity = Instant::now();
                 if search_mode {
                     match event.code {
