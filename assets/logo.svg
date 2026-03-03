@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="400" height="400">
+  <defs>
+    <mask id="gear-mask">
+      <!-- White = visible gear body -->
+      <path d="M 93.783,33.704 L 94.155,15.317 L 125.845,15.317 L 126.217,33.704 L 152.482,44.584 L 165.747,31.845 L 188.155,54.253 L 175.416,67.518 L 186.296,93.783 L 204.683,94.155 L 204.683,125.845 L 186.296,126.217 L 175.416,152.482 L 188.155,165.747 L 165.747,188.155 L 152.482,175.416 L 126.217,186.296 L 125.845,204.683 L 94.155,204.683 L 93.783,186.296 L 67.518,175.416 L 54.253,188.155 L 31.845,165.747 L 44.584,152.482 L 33.704,126.217 L 15.317,125.845 L 15.317,94.155 L 33.704,93.783 L 44.584,67.518 L 31.845,54.253 L 54.253,31.845 L 67.518,44.584 Z" fill="white"/>
+      <!-- Black = punch inner hole -->
+      <circle cx="110" cy="110" r="44" fill="black"/>
+      <!-- Black = punch small holes -->
+      <circle cx="110.000" cy="49.000" r="5.5" fill="black"/>
+  <circle cx="142.979" cy="58.684" r="5.5" fill="black"/>
+  <circle cx="165.488" cy="84.660" r="5.5" fill="black"/>
+  <circle cx="170.379" cy="118.681" r="5.5" fill="black"/>
+  <circle cx="156.101" cy="149.947" r="5.5" fill="black"/>
+  <circle cx="127.186" cy="168.529" r="5.5" fill="black"/>
+  <circle cx="92.814" cy="168.529" r="5.5" fill="black"/>
+  <circle cx="63.899" cy="149.947" r="5.5" fill="black"/>
+  <circle cx="49.621" cy="118.681" r="5.5" fill="black"/>
+  <circle cx="54.512" cy="84.660" r="5.5" fill="black"/>
+  <circle cx="77.021" cy="58.684" r="5.5" fill="black"/>
+    </mask>
+  </defs>
+
+  <!-- Gear shape with holes punched out via mask -->
+  <rect width="220" height="220" fill="#CE422B" mask="url(#gear-mask)"/>
+
+  <!-- Key drawn on top, clipped to inner gear area -->
+  <clipPath id="inner">
+    <circle cx="110" cy="110" r="44"/>
+  </clipPath>
+  <g clip-path="url(#inner)">
+    <circle cx="98" cy="110" r="18" fill="none" stroke="black" stroke-width="9"/>
+  <rect x="116" y="106.00" width="38" height="8" rx="2" fill="black"/>
+  <rect x="141" y="114.00" width="7" height="10" rx="2" fill="black"/>
+  <rect x="147" y="114.00" width="7" height="7" rx="2" fill="black"/>
+  </g>
+</svg>
