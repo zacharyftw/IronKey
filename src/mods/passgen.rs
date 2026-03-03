@@ -37,14 +37,13 @@ pub fn passgen(selected_options: [bool; 4], pass_len: usize) -> io::Result<Strin
         ));
     }
 
-    let mut charset_vec = charset.chars().collect::<Vec<char>>();
+    let charset_vec: Vec<char> = charset.chars().collect();
     let mut rng = rand::thread_rng();
-    charset_vec.shuffle(&mut rng);
 
     let mut pass = String::with_capacity(pass_len);
-
-    for &char in charset_vec.iter().cycle().take(pass_len) {
-        pass.push(char);
+    for _ in 0..pass_len {
+        let ch = charset_vec.choose(&mut rng).expect("charset is non-empty");
+        pass.push(*ch);
     }
     savepass("passwords.txt", &pass)?;
 
@@ -86,28 +85,5 @@ mod tests {
         let pass_len = 20;
         let result = passgen(selected_options, pass_len).unwrap();
         assert_eq!(result.len(), pass_len);
-    }
-
-    #[test]
-    fn no_consecutive_characters() {
-        let selected_options = [true, true, true, true]; // Enable all character types
-        let pass_len = 100; // Generate a relatively long password to test this thoroughly
-        let password = passgen(selected_options, pass_len).unwrap();
-
-        // Check for consecutive characters
-        let mut last_char = '\0'; // Initialize with a character that won't be in the password
-        let mut consecutive_found = false;
-        for c in password.chars() {
-            if c == last_char {
-                consecutive_found = true;
-                break;
-            }
-            last_char = c;
-        }
-
-        assert!(
-            !consecutive_found,
-            "Generated password contains consecutive characters."
-        );
     }
 }
