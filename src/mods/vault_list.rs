@@ -1,4 +1,5 @@
-use super::utils::{centered_rect, navigate_list};
+use super::generator;
+use super::utils::{centered_rect, navigate_list, set_clipboard_content};
 use super::vault::Vault;
 use crossterm::event::{read, Event, KeyCode};
 use ratatui::backend::CrosstermBackend;
@@ -20,6 +21,7 @@ pub fn show(
     vault: &Vault,
 ) -> Result<VaultListAction, Box<dyn Error>> {
     let mut list_state = ListState::default();
+    let mut status = String::new();
     if !vault.entries.is_empty() {
         list_state.select(Some(0));
     }
@@ -63,7 +65,14 @@ pub fn show(
                 f.render_stateful_widget(list, centered_rect(74, 70, size), &mut list_state);
             }
 
-            let hint = Paragraph::new(" ↑↓ navigate   Enter view   a add   q quit ")
+            if !status.is_empty() {
+                let status_para = Paragraph::new(status.as_str())
+                    .style(Style::default().fg(Color::Yellow))
+                    .alignment(Alignment::Center);
+                f.render_widget(status_para, centered_rect(80, 6, size));
+            }
+
+            let hint = Paragraph::new(" ↑↓ navigate   Enter view   a add   g generate   q quit ")
                 .style(Style::default().fg(Color::DarkGray))
                 .alignment(Alignment::Center);
             f.render_widget(hint, centered_rect(80, 8, size));
@@ -73,6 +82,15 @@ pub fn show(
             match event.code {
                 KeyCode::Char('q') => return Ok(VaultListAction::Quit),
                 KeyCode::Char('a') => return Ok(VaultListAction::Add),
+                KeyCode::Char('g') => {
+                    if let Some(pw) = generator::show(term)? {
+                        match set_clipboard_content(&pw) {
+                            Ok(_) => status = "Password generated and copied!".to_string(),
+                            Err(_) => status = "Password generated.".to_string(),
+                        }
+                    }
+                    term.clear()?;
+                }
                 KeyCode::Up | KeyCode::Down => {
                     navigate_list(&mut list_state, vault.entries.len(), event.code);
                 }

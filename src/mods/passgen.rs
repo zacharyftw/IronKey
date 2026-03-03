@@ -1,8 +1,6 @@
-use super::utils::savepass;
 use rand::prelude::SliceRandom;
-use std::io;
 
-pub fn passgen(selected_options: [bool; 4], pass_len: usize) -> io::Result<String> {
+pub fn passgen(selected_options: [bool; 4], pass_len: usize) -> Result<String, String> {
     let lowercase_letters = "abcdefghijklmnopqrstuvwxyz";
     let uppercase_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let numbers = "0123456789";
@@ -24,17 +22,11 @@ pub fn passgen(selected_options: [bool; 4], pass_len: usize) -> io::Result<Strin
     }
 
     if pass_len == 0 {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "password length must be greater than 0",
-        ));
+        return Err("password length must be greater than 0".to_string());
     }
 
     if charset.is_empty() {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "at least one character type must be selected",
-        ));
+        return Err("at least one character type must be selected".to_string());
     }
 
     let charset_vec: Vec<char> = charset.chars().collect();
@@ -45,8 +37,6 @@ pub fn passgen(selected_options: [bool; 4], pass_len: usize) -> io::Result<Strin
         let ch = charset_vec.choose(&mut rng).expect("charset is non-empty");
         pass.push(*ch);
     }
-    savepass("passwords.txt", &pass)?;
-
     Ok(pass)
 }
 

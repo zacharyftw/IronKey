@@ -1,4 +1,4 @@
-use super::passgen::passgen;
+use super::generator;
 use super::utils::centered_rect;
 use super::vault::{new_entry, VaultEntry};
 use crossterm::event::{read, Event, KeyCode};
@@ -153,13 +153,12 @@ fn show_form(
                         return Ok(Some(entry));
                     }
                 }
-                KeyCode::Char('g') if focused == 2 => match passgen([true, true, true, true], 20) {
-                    Ok(p) => {
-                        fields[2] = p;
+                KeyCode::Char('g') if focused == 2 => {
+                    if let Some(pw) = generator::show(term)? {
+                        fields[2] = pw;
                         status = "Password generated!".to_string();
                     }
-                    Err(_) => {}
-                },
+                }
                 KeyCode::Char(c) => {
                     fields[focused].push(c);
                     status.clear();
