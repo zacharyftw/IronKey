@@ -52,13 +52,3 @@ pub fn load() -> Config {
     };
     toml::from_str(&content).unwrap_or_default()
 }
-
-pub fn save(config: &Config) -> std::io::Result<()> {
-    let path = config_path();
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent)?;
-    }
-    let content = toml::to_string_pretty(config)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
-    std::fs::write(path, content)
-}

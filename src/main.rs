@@ -12,6 +12,7 @@ use mods::vault_list::{self, VaultListAction};
 use ratatui::backend::CrosstermBackend;
 use ratatui::Terminal;
 use std::io::stdout;
+use zeroize::Zeroizing;
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     stdout().execute(EnterAlternateScreen)?;
@@ -30,7 +31,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
             Screen::Auth => {
                 let vault_path = state.config.vault_path();
                 let (password, loaded_vault) = auth(&mut term, &vault_path)?;
-                state.master_password = password;
+                state.master_password = Zeroizing::new(password);
                 state.vault = loaded_vault;
                 state.screen = Screen::VaultList;
             }
@@ -44,14 +45,17 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
                     VaultListAction::Add => state.screen = Screen::AddEntry,
                     VaultListAction::Lock => {
                         state.vault = Default::default();
-                        state.master_password = String::new();
+                        state.master_password = Zeroizing::new(String::new());
                         state.screen = Screen::Auth;
                     }
                 }
             }
             Screen::EntryDetail(i) => {
                 term.clear()?;
-                let entry = state.vault.entries[i].clone();
+                let Some(entry) = state.vault.entries.get(i).cloned() else {
+                    state.screen = Screen::VaultList;
+                    continue;
+                };
                 let timeout = state.config.clipboard_timeout_secs;
                 let idle = state.config.lock_on_idle_secs;
                 match entry_detail::show(&mut term, &entry, timeout, idle)? {
@@ -68,7 +72,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
                     }
                     DetailAction::Lock => {
                         state.vault = Default::default();
-                        state.master_password = String::new();
+                        state.master_password = Zeroizing::new(String::new());
                         state.screen = Screen::Auth;
                     }
                 }
@@ -89,8 +93,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
             Screen::EditEntry(id) => {
                 term.clear()?;
                 let default_length = state.config.default_password_length;
-                if let Some(pos) = state.vault.entries.iter().position(|e| e.id == id) {
-                    let existing = state.vault.entries[pos].clone();
+                if let Some(existing) = state.vault.entries.iter().find(|e| e.id == id).cloned() {
                     if let Some(updated) =
                         entry_form::show_edit(&mut term, &existing, default_length)?
                     {

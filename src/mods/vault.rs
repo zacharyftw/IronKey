@@ -36,13 +36,6 @@ struct VaultFile {
     ciphertext: String,
 }
 
-pub fn vault_path() -> PathBuf {
-    let mut path = dirs::home_dir().expect("could not find home directory");
-    path.push(".ironkey");
-    path.push("vault.json");
-    path
-}
-
 pub fn load(path: &PathBuf, master_password: &str) -> std::io::Result<Vault> {
     let data = fs::read_to_string(path)?;
     let vault_file: VaultFile = serde_json::from_str(&data)
@@ -58,7 +51,7 @@ pub fn load(path: &PathBuf, master_password: &str) -> std::io::Result<Vault> {
         .decode(&vault_file.ciphertext)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
 
-    let mut key = derive_key(master_password, &salt);
+    let mut key = derive_key(master_password, &salt)?;
     let plaintext = decrypt(&key, &nonce, &ciphertext).map_err(|_| {
         std::io::Error::new(std::io::ErrorKind::InvalidData, "wrong master password")
     })?;
@@ -75,8 +68,8 @@ pub fn save(path: &PathBuf, master_password: &str, vault: &Vault) -> std::io::Re
 
     let mut salt = [0u8; 16];
     rand::thread_rng().fill_bytes(&mut salt);
-    let mut key = derive_key(master_password, &salt);
-    let (nonce, ciphertext) = encrypt(&key, &plaintext);
+    let mut key = derive_key(master_password, &salt)?;
+    let (nonce, ciphertext) = encrypt(&key, &plaintext)?;
     key.zeroize();
 
     let vault_file = VaultFile {
@@ -91,24 +84,33 @@ pub fn save(path: &PathBuf, master_password: &str, vault: &Vault) -> std::io::Re
 
     let json = serde_json::to_string_pretty(&vault_file)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
-    fs::write(path, json)
+
+    // Atomic write: write to a temp file then rename to avoid corruption on power loss
+    let tmp_path = path.with_extension("tmp");
+    fs::write(&tmp_path, &json)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&tmp_path, fs::Permissions::from_mode(0o600))?;
+    }
+    fs::rename(&tmp_path, path)
 }
 
-fn derive_key(master_password: &str, salt: &[u8]) -> [u8; 32] {
+fn derive_key(master_password: &str, salt: &[u8]) -> std::io::Result<[u8; 32]> {
     let mut key = [0u8; 32];
     Argon2::default()
         .hash_password_into(master_password.as_bytes(), salt, &mut key)
-        .expect("argon2 key derivation failed");
-    key
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
+    Ok(key)
 }
 
-fn encrypt(key_bytes: &[u8; 32], plaintext: &[u8]) -> (Vec<u8>, Vec<u8>) {
+fn encrypt(key_bytes: &[u8; 32], plaintext: &[u8]) -> std::io::Result<(Vec<u8>, Vec<u8>)> {
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key_bytes));
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
     let ciphertext = cipher
         .encrypt(&nonce, plaintext)
-        .expect("encryption failed");
-    (nonce.to_vec(), ciphertext)
+        .map_err(|e| std::io::Error::other(e.to_string()))?;
+    Ok((nonce.to_vec(), ciphertext))
 }
 
 fn decrypt(

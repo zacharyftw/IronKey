@@ -61,7 +61,7 @@ pub fn show(
 
         if filtered.is_empty() {
             list_state.select(None);
-        } else if list_state.selected().map_or(true, |s| s >= filtered.len()) {
+        } else if list_state.selected().is_none_or(|s| s >= filtered.len()) {
             list_state.select(Some(0));
         }
 
