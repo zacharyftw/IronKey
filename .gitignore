@@ -1,3 +1,5 @@
 target/
 site/
 Cargo.lock
+CLAUDE.md
+memory/

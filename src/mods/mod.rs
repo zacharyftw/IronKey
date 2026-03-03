@@ -4,8 +4,6 @@ pub mod entry_detail;
 pub mod entry_form;
 pub mod generator;
 pub mod passgen;
-pub mod s1;
-pub mod s2;
 pub mod state;
 pub mod utils;
 pub mod vault;

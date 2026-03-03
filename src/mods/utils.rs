@@ -1,15 +1,6 @@
 use crossterm::event::KeyCode;
 use ratatui::layout::Rect;
 use ratatui::widgets::ListState;
-use std::fs::{File, OpenOptions};
-use std::io::Write;
-pub fn savepass(filename: &str, password: &str) -> std::io::Result<()> {
-    let mut file = OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(filename)?;
-    writeln!(file, "{}", password)
-}
 
 pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     let padding_x = r
@@ -28,31 +19,6 @@ pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     )
 }
 
-pub fn export_password_history(format: &str, passwords: &[String]) -> std::io::Result<String> {
-    let content = match format {
-        "json" => generate_json_content(passwords)?,
-        "csv" => generate_csv_content(passwords)?,
-        _ => {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "Invalid format",
-            ))
-        }
-    };
-    let filename = format!("password_history.{}", format);
-    let mut file = File::create(&filename)?;
-    writeln!(file, "{}", content)?;
-    Ok(filename)
-}
-
-pub fn generate_json_content(passwords: &[String]) -> std::io::Result<String> {
-    Ok(serde_json::to_string(passwords)?)
-}
-
-pub fn generate_csv_content(passwords: &[String]) -> std::io::Result<String> {
-    let csv_content = passwords.join("\n");
-    Ok(csv_content)
-}
 #[cfg(feature = "wayland_support")]
 pub fn set_clipboard_content(content: &str) -> Result<(), String> {
     use wl_clipboard_rs::copy::{MimeType, Options, Source};
