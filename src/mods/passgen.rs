@@ -23,6 +23,13 @@ pub fn passgen(selected_options: [bool; 4], pass_len: usize) -> io::Result<Strin
         charset.push_str(symbols);
     }
 
+    if pass_len == 0 {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "password length must be greater than 0",
+        ));
+    }
+
     if charset.is_empty() {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
