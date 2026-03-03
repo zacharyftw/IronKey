@@ -1,5 +1,7 @@
+use chrono::Utc;
 use rand::RngCore;
 use std::{fs, path::PathBuf};
+use uuid::Uuid;
 
 use aes_gcm::{
     aead::{Aead, AeadCore, KeyInit, OsRng},
@@ -116,4 +118,45 @@ fn decrypt(
 ) -> Result<Vec<u8>, aes_gcm::Error> {
     let cipher = Aes256Gcm::new(Key::<Aes256Gcm>::from_slice(key_bytes));
     cipher.decrypt(Nonce::from_slice(nonce), ciphertext)
+}
+
+pub fn new_entry(
+    title: &str,
+    username: &str,
+    password: &str,
+    url: &str,
+    notes: &str,
+) -> VaultEntry {
+    let now = Utc::now().to_rfc3339();
+    VaultEntry {
+        id: Uuid::new_v4().to_string(),
+        title: title.to_string(),
+        username: username.to_string(),
+        password: password.to_string(),
+        url: url.to_string(),
+        notes: notes.to_string(),
+        created_at: now.clone(),
+        updated_at: now,
+    }
+}
+
+pub fn add_entry(vault: &mut Vault, entry: VaultEntry) {
+    vault.entries.push(entry);
+}
+
+pub fn update_entry(vault: &mut Vault, id: &str, mut updated: VaultEntry) -> bool {
+    if let Some(e) = vault.entries.iter_mut().find(|e| e.id == id) {
+        updated.created_at = e.created_at.clone();
+        updated.updated_at = Utc::now().to_rfc3339();
+        *e = updated;
+        true
+    } else {
+        false
+    }
+}
+
+pub fn delete_entry(vault: &mut Vault, id: &str) -> bool {
+    let before = vault.entries.len();
+    vault.entries.retain(|e| e.id != id);
+    vault.entries.len() < before
 }
