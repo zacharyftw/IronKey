@@ -1,24 +1,20 @@
 # IronKey
 
-IronKey is a Terminal User Interface (TUI) based password generator written in Rust. It leverages the power of Rust's performance and safety features to provide a fast and secure way to generate passwords.
+IronKey is a Terminal User Interface (TUI) based encrypted password manager written in Rust.
 
 ## Features
 
-- **TUI Interface**: IronKey uses a text-based user interface, making it lightweight and easy to use directly from the terminal.
-
-- **Customizable Password Generation**: IronKey generates passwords based on user-selected options. You can choose the length and the types of characters to include in the password.
-
-- **Password Saving**: IronKey saves the generated password to a file in the user's home directory for future reference.
-
-**Exporting Passwords**: After generating a password, you can export your password history to a file in either JSON or CSV format. This option is presented in the second screen after generating a password.
-
-**Clipboard Support**: You can copy the generated password directly to your clipboard by pressing `Ctrl+C` in the second screen, making it easy to use your new password immediately.
+- **Encrypted Vault** — passwords stored with AES-256-GCM encryption, key derived via Argon2id from your master password
+- **Master Password** — vault locked behind a master password; create on first run, unlock on every launch
+- **Full Entry Management** — add, edit, and delete entries with title, username, password, URL, and notes
+- **Password Generator** — configurable generator (length, character types) accessible standalone or inline when editing entries
+- **Live Search** — `/` to filter entries by title, username, or URL as you type
+- **Clipboard Safety** — auto-clears clipboard after 30 seconds (configurable) with a live countdown; also clears on exit
+- **Wayland & X11** — clipboard support for both display servers
 
 ## Installation
 
-To install IronKey, you need to have `Rust` & `Git` installed on your machine. If you don't have them installed in your machine, you can install it from the [Rust](https://www.rust-lang.org/tools/install) & [Git](https://git-scm.com/downloads).
-
-Once Rust & Git is installed, you can install IronKey by cloning the repository and building the project:
+Requires Rust and Git.
 
 ```sh
 git clone https://github.com/KekmaTime/IronKey.git
@@ -34,22 +30,62 @@ cargo install ironkey
 
 ## Usage
 
-```
+```sh
 ironkey
 ```
 
-This will start the application & you will be presented with several options for generating a password:
+On first launch you will be prompted to set a master password and a vault will be created at `~/.ironkey/vault.json`.
 
-- **Length**: Input the desired length of the password directly.
+### Vault List
 
-- **Symbols**: Use the arrow keys to toggle between "Yes" and "No". If "Yes" is selected,  the generated password will include symbol characters.
+| Key | Action |
+|---|---|
+| `↑` / `↓` | Navigate entries |
+| `Enter` | View entry |
+| `a` | Add new entry |
+| `g` | Open password generator |
+| `/` | Search / filter |
+| `Esc` | Clear search |
+| `q` | Quit |
 
-- **Numbers**: Use the arrow keys to toggle between "Yes" and "No". If "Yes" is selected, the generated password will include numeric characters.
+### Entry Detail
 
-- **Lowercase Characters**: Use the arrow keys to toggle between "Yes" and "No". If "Yes" is selected, the generated password will include lowercase alphabetic characters.
+| Key | Action |
+|---|---|
+| `Space` | Reveal / hide password |
+| `c` | Copy password to clipboard |
+| `u` | Copy username to clipboard |
+| `e` | Edit entry |
+| `d` | Delete entry |
+| `Esc` | Back to vault list |
 
-- **Uppercase Characters**: Use the arrow keys to toggle between "Yes" and "No". If "Yes" is selected, the generated password will include uppercase alphabetic characters.
+### Entry Form (Add / Edit)
 
-After generating a password, you will be taken to a second screen where you can choose to export your password history to JSON or CSV format. Use the arrow keys to select your desired option and press "Enter" to confirm. The exported file will be saved in your home directory.
+| Key | Action |
+|---|---|
+| `Tab` / `Shift+Tab` | Move between fields |
+| `g` | Generate password (on password field) |
+| `Enter` | Save |
+| `Esc` | Cancel |
 
-To copy the generated password to your clipboard, simply press `Ctrl+C` in the second screen. The password will be copied, and you can paste it wherever needed.
+### Password Generator
+
+| Key | Action |
+|---|---|
+| `Tab` / `Shift+Tab` | Move between options |
+| `Space` | Toggle character type |
+| `Enter` | Generate → confirm |
+| `r` | Regenerate |
+| `c` | Copy to clipboard |
+| `Esc` | Cancel |
+
+## Configuration
+
+IronKey reads `~/.ironkey/config.toml` on startup. Missing keys fall back to defaults.
+
+```toml
+vault_path = "~/.ironkey/vault.json"  # custom vault location
+clipboard_timeout_secs = 30           # seconds before clipboard auto-clears
+default_password_length = 20          # default length in the generator
+lock_on_idle_secs = 300               # idle lock (optional)
+```
