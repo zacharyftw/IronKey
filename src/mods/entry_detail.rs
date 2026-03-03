@@ -61,7 +61,7 @@ pub fn show(
         };
 
         term.draw(|f| {
-            let size = f.size();
+            let size = f.area();
 
             let block = Block::default()
                 .title(format!("  {}  ", entry.title))
@@ -153,7 +153,7 @@ fn confirm_delete(
 ) -> Result<bool, Box<dyn Error>> {
     loop {
         term.draw(|f| {
-            let size = f.size();
+            let size = f.area();
             let block = Block::default()
                 .title(" Confirm Delete ")
                 .title_alignment(Alignment::Center)

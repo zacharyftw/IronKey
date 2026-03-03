@@ -55,7 +55,7 @@ fn show_form(
 
     loop {
         term.draw(|f| {
-            let size = f.size();
+            let size = f.area();
             let form_area = centered_rect(60, 90, size);
 
             let outer = Block::default()

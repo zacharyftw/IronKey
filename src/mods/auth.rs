@@ -29,7 +29,7 @@ fn draw_input(
 ) -> Result<(), Box<dyn Error>> {
     let masked = "*".repeat(input.chars().count());
     term.draw(|f| {
-        let size = f.size();
+        let size = f.area();
 
         let title_block = Block::default()
             .title("IronKey")

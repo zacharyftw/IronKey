@@ -66,7 +66,7 @@ pub fn show(
         }
 
         term.draw(|f| {
-            let size = f.size();
+            let size = f.area();
 
             let block = Block::default()
                 .title(" IronKey — Vault ")
