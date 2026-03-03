@@ -2,6 +2,7 @@ mod mods;
 use crossterm::event::read;
 use crossterm::terminal::{self, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::ExecutableCommand;
+use mods::auth::auth;
 use mods::s1::*;
 use mods::s2::*;
 use ratatui::backend::CrosstermBackend;
@@ -17,6 +18,11 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let mut term = Terminal::new(CrosstermBackend::new(stdout()))?;
     term.clear()
         .map_err(|e| format!("Failed to clear terminal: {}", e))?;
+
+    // auth screen
+    let (_master_password, _vault) = auth(&mut term)?;
+
+    term.clear()?;
 
     let mut pass_len: usize = 0;
     let mut input = String::new();
