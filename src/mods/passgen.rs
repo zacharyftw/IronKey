@@ -1,4 +1,4 @@
-use rand::prelude::SliceRandom;
+use rand::prelude::IndexedRandom;
 
 pub fn passgen(selected_options: [bool; 4], pass_len: usize) -> Result<String, String> {
     let lowercase_letters = "abcdefghijklmnopqrstuvwxyz";
@@ -30,7 +30,7 @@ pub fn passgen(selected_options: [bool; 4], pass_len: usize) -> Result<String, S
     }
 
     let charset_vec: Vec<char> = charset.chars().collect();
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let mut pass = String::with_capacity(pass_len);
     for _ in 0..pass_len {

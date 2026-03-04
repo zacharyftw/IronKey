@@ -67,7 +67,7 @@ pub fn save(path: &PathBuf, master_password: &str, vault: &Vault) -> std::io::Re
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
 
     let mut salt = [0u8; 16];
-    rand::thread_rng().fill_bytes(&mut salt);
+    rand::rng().fill_bytes(&mut salt);
     let mut key = derive_key(master_password, &salt)?;
     let (nonce, ciphertext) = encrypt(&key, &plaintext)?;
     key.zeroize();
