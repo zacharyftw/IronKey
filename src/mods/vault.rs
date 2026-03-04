@@ -1,5 +1,5 @@
 use chrono::Utc;
-use rand::RngCore;
+use rand::Rng;
 use std::{fs, path::PathBuf};
 use uuid::Uuid;
 

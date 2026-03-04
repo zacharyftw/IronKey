@@ -13,20 +13,20 @@ keywords = ["password","generator", "cli", "tui"]
 
 [dependencies]
 crossterm = "0.29.0"
-rand = "0.9"
+rand = "0.10"
 ratatui = { version = "0.30.0", features = ["all-widgets"] }
 dirs = "6.0.0"
 x11-clipboard = "0.9.3"
 serde_json = "1.0.149"
 wl-clipboard-rs = { version = "0.9.3", optional = true }
 serde = { version = "1", features = ["derive"] }
-aes-gcm = "0.10"
+aes-gcm = "0.10.3"
 argon2 = "0.5"
 uuid = { version = "1", features = ["v4"] }
-chrono = "0.4"
+chrono = "0.4.39"
 zeroize = "1"
 base64 = "0.22"
-toml = "0.8"
+toml = "1.0"
 
 [features]
 wayland_support = ["wl-clipboard-rs"]
