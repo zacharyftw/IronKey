@@ -5,15 +5,15 @@
 
 [![CI][s0]][l0] [![crates][s1]][l1] ![MIT][s2] [![UNSAFE][s3]][l3] [![deps][s4]][l4]
 
-[s0]: https://github.com/KekmaTime/IronKey/workflows/CI/badge.svg
-[l0]: https://github.com/KekmaTime/IronKey/actions
+[s0]: https://github.com/zacharyftw/IronKey/workflows/Rust/badge.svg
+[l0]: https://github.com/zacharyftw/IronKey/actions
 [s1]: https://img.shields.io/crates/v/ironkey.svg
 [l1]: https://crates.io/crates/ironkey
 [s2]: https://img.shields.io/badge/license-MIT-blue.svg
 [s3]: https://img.shields.io/badge/unsafe-forbidden-success.svg
 [l3]: https://github.com/rust-secure-code/safety-dance/
-[s4]: https://deps.rs/repo/github/KekmaTime/IronKey/status.svg
-[l4]: https://deps.rs/repo/github/KekmaTime/IronKey
+[s4]: https://deps.rs/repo/github/zacharyftw/IronKey/status.svg
+[l4]: https://deps.rs/repo/github/zacharyftw/IronKey
 
 </h1>
 
